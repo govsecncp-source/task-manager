@@ -236,9 +236,28 @@
                     </div>
                     <div class="flex space-x-2">
                         <input type="text" id="comment-input" placeholder="Write a comment..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <button onclick="addComment()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">Send</button>
+                        <button onclick="promptCommentConfirmation()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">Send</button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= CONFIRMATION POPUP MODAL ================= -->
+    <div id="confirm-popup" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-6 text-center shadow-2xl transform transition-all scale-100 space-y-4">
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-question"></i>
+            </div>
+            <h3 class="font-bold text-lg text-gray-800">Confirm Action</h3>
+            <p class="text-sm text-gray-600">Are you sure you want to send this comment?</p>
+            <div class="flex space-x-2 pt-2">
+                <button onclick="closeConfirmPopup()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm font-medium transition">
+                    Cancel
+                </button>
+                <button onclick="confirmAndAddComment()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition">
+                    Yes, Send
+                </button>
             </div>
         </div>
     </div>
@@ -580,7 +599,6 @@
                 deleteContainer.classList.remove('flex');
             }
 
-            // Only user can upload/remove attachments, admin can only view them
             const uploadContainer = document.getElementById('upload-container');
             if (currentUser.role === 'employee') {
                 uploadContainer.classList.remove('hidden');
@@ -633,7 +651,6 @@
                     ? `<a href="${att.url}" target="_blank" class="text-blue-600 hover:underline font-semibold ml-1"><i class="fa-solid fa-eye mr-1"></i>View</a>` 
                     : '';
                 
-                // Remove button for attachments is only for the user/employee
                 let removeBtn = '';
                 if (currentUser.role === 'employee') {
                     removeBtn = `<button onclick="removeAttachment(${index})" class="text-red-500 hover:text-red-700 ml-3 text-xs font-medium"><i class="fa-solid fa-trash mr-1"></i>Remove</button>`;
@@ -724,7 +741,25 @@
             });
         }
 
-        async function addComment() {
+        function promptCommentConfirmation() {
+            const input = document.getElementById('comment-input');
+            const text = input.value.trim();
+            if (!text) {
+                alert('Please type a comment before sending.');
+                return;
+            }
+            // Show confirmation popup before sending
+            document.getElementById('confirm-popup').classList.remove('hidden');
+            document.getElementById('confirm-popup').classList.add('flex');
+        }
+
+        function closeConfirmPopup() {
+            document.getElementById('confirm-popup').classList.add('hidden');
+            document.getElementById('confirm-popup').classList.remove('flex');
+        }
+
+        async function confirmAndAddComment() {
+            closeConfirmPopup();
             const input = document.getElementById('comment-input');
             const text = input.value.trim();
             if (text) {
@@ -741,7 +776,7 @@
                         body: JSON.stringify(task)
                     });
                     
-                    // Show success popup menu when send is pressed
+                    // Show success popup after successful send
                     document.getElementById('success-popup-message').innerText = "Your comment has been sent successfully.";
                     document.getElementById('success-popup').classList.remove('hidden');
                     document.getElementById('success-popup').classList.add('flex');

@@ -221,7 +221,8 @@
                     <div id="modal-attachments-list" class="space-y-2 mb-3">
                         <!-- Attachment items -->
                     </div>
-                    <div class="flex items-center space-x-2">
+                    <!-- Upload Input restricted or shown based on user/admin -->
+                    <div id="upload-container" class="flex items-center space-x-2">
                         <input type="file" id="file-input" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                         <button onclick="uploadAttachment()" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition">Upload</button>
                     </div>
@@ -239,6 +240,20 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ================= SUCCESS POPUP MODAL ================= -->
+    <div id="success-popup" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-6 text-center shadow-2xl transform transition-all scale-100 space-y-4">
+            <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 class="font-bold text-lg text-gray-800">Success!</h3>
+            <p id="success-popup-message" class="text-sm text-gray-600">Your comment has been sent successfully.</p>
+            <button onclick="closeSuccessPopup()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition">
+                OK
+            </button>
         </div>
     </div>
 
@@ -565,6 +580,16 @@
                 deleteContainer.classList.remove('flex');
             }
 
+            // Only user can upload/remove attachments, admin can only view them
+            const uploadContainer = document.getElementById('upload-container');
+            if (currentUser.role === 'employee') {
+                uploadContainer.classList.remove('hidden');
+                uploadContainer.classList.add('flex');
+            } else {
+                uploadContainer.classList.add('hidden');
+                uploadContainer.classList.remove('flex');
+            }
+
             renderAttachments(task);
             renderComments(task);
 
@@ -603,19 +628,47 @@
                 list.innerHTML = `<p class="text-xs text-gray-400 italic">No attachments added yet.</p>`;
                 return;
             }
-            attachments.forEach(att => {
+            attachments.forEach((att, index) => {
                 const fileLink = att.url && att.url !== '#' 
                     ? `<a href="${att.url}" target="_blank" class="text-blue-600 hover:underline font-semibold ml-1"><i class="fa-solid fa-eye mr-1"></i>View</a>` 
                     : '';
+                
+                // Remove button for attachments is only for the user/employee
+                let removeBtn = '';
+                if (currentUser.role === 'employee') {
+                    removeBtn = `<button onclick="removeAttachment(${index})" class="text-red-500 hover:text-red-700 ml-3 text-xs font-medium"><i class="fa-solid fa-trash mr-1"></i>Remove</button>`;
+                }
+
                 list.innerHTML += `
                     <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs">
-                        <span class="font-medium text-gray-700 flex items-center">
-                            <i class="fa-solid fa-file-pdf mr-2 text-red-500 text-sm"></i>${att.name} (${att.size})
+                        <span class="font-medium text-gray-700 flex items-center truncate max-w-[280px]">
+                            <i class="fa-solid fa-file-pdf mr-2 text-red-500 text-sm flex-shrink-0"></i><span class="truncate">${att.name}</span> (${att.size})
                         </span>
-                        ${fileLink}
+                        <div class="flex items-center space-x-2 flex-shrink-0">
+                            ${fileLink}
+                            ${removeBtn}
+                        </div>
                     </div>
                 `;
             });
+        }
+
+        async function removeAttachment(index) {
+            const task = tasks.find(t => t.id === currentActiveTaskId);
+            if (task && task.attachments) {
+                task.attachments.splice(index, 1);
+                renderAttachments(task);
+
+                try {
+                    await fetch('/api/tasks', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(task)
+                    });
+                } catch (err) {
+                    console.error('Error removing attachment:', err);
+                }
+            }
         }
 
         async function uploadAttachment() {
@@ -687,10 +740,20 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(task)
                     });
+                    
+                    // Show success popup menu when send is pressed
+                    document.getElementById('success-popup-message').innerText = "Your comment has been sent successfully.";
+                    document.getElementById('success-popup').classList.remove('hidden');
+                    document.getElementById('success-popup').classList.add('flex');
                 } catch (err) {
                     console.error('Error sending comment:', err);
                 }
             }
+        }
+
+        function closeSuccessPopup() {
+            document.getElementById('success-popup').classList.add('hidden');
+            document.getElementById('success-popup').classList.remove('flex');
         }
     </script>
 </body>

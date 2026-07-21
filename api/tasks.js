@@ -43,8 +43,27 @@ export default function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-        const { title, description, assignee, assigneeKey, deadline, status, attachments, comments } = req.body;
+        const { id, title, description, assignee, assigneeKey, deadline, status, attachments, comments } = req.body;
         
+        // Check if task already exists (Update instead of Duplicate)
+        const existingIndex = tasks.findIndex(t => t.id === id);
+
+        if (existingIndex !== -1) {
+            tasks[existingIndex] = {
+                id: tasks[existingIndex].id,
+                title: title || tasks[existingIndex].title,
+                description: description || tasks[existingIndex].description,
+                assignee: assignee || tasks[existingIndex].assignee,
+                assigneeKey: assigneeKey || tasks[existingIndex].assigneeKey,
+                deadline: deadline || tasks[existingIndex].deadline,
+                status: status || tasks[existingIndex].status,
+                attachments: attachments || tasks[existingIndex].attachments,
+                comments: comments || tasks[existingIndex].comments
+            };
+            return res.status(200).json({ message: 'Task updated successfully', task: tasks[existingIndex] });
+        }
+
+        // Otherwise, create a new task
         const newTask = {
             id: Date.now(),
             title: title || 'Untitled Task',

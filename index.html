@@ -556,7 +556,6 @@
             document.getElementById('modal-deadline').innerText = task.deadline || 'No deadline';
             document.getElementById('modal-status-select').value = task.status;
 
-            // Only show delete button in modal if user is ADMIN
             const deleteContainer = document.getElementById('modal-delete-container');
             if (currentUser.role === 'admin') {
                 deleteContainer.classList.remove('hidden');
@@ -588,7 +587,7 @@
                     await fetch('/api/tasks', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ...task, updateAction: 'status' })
+                        body: JSON.stringify(task)
                     });
                 } catch (err) {
                     console.error('Error updating status:', err);
@@ -605,9 +604,15 @@
                 return;
             }
             attachments.forEach(att => {
+                const fileLink = att.url && att.url !== '#' 
+                    ? `<a href="${att.url}" target="_blank" class="text-blue-600 hover:underline font-semibold ml-1"><i class="fa-solid fa-eye mr-1"></i>View</a>` 
+                    : '';
                 list.innerHTML += `
                     <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs">
-                        <span class="font-medium text-gray-700"><i class="fa-solid fa-file mr-2 text-blue-500"></i>${att.name} (${att.size})</span>
+                        <span class="font-medium text-gray-700 flex items-center">
+                            <i class="fa-solid fa-file-pdf mr-2 text-red-500 text-sm"></i>${att.name} (${att.size})
+                        </span>
+                        ${fileLink}
                     </div>
                 `;
             });
@@ -617,21 +622,34 @@
             const fileInput = document.getElementById('file-input');
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
-                const task = tasks.find(t => t.id === currentActiveTaskId);
-                if (!task.attachments) task.attachments = [];
-                task.attachments.push({ name: file.name, size: `${Math.round(file.size / 1024)} KB` });
-                fileInput.value = '';
-                renderAttachments(task);
+                const reader = new FileReader();
 
-                try {
-                    await fetch('/api/tasks', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(task)
+                reader.onload = async function(e) {
+                    const fileDataUrl = e.target.result;
+                    const task = tasks.find(t => t.id === currentActiveTaskId);
+                    if (!task.attachments) task.attachments = [];
+                    
+                    task.attachments.push({ 
+                        name: file.name, 
+                        size: `${Math.round(file.size / 1024)} KB`,
+                        url: fileDataUrl 
                     });
-                } catch (err) {
-                    console.error('Error uploading attachment:', err);
-                }
+
+                    fileInput.value = '';
+                    renderAttachments(task);
+
+                    try {
+                        await fetch('/api/tasks', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(task)
+                        });
+                    } catch (err) {
+                        console.error('Error uploading attachment:', err);
+                    }
+                };
+
+                reader.readAsDataURL(file);
             }
         }
 

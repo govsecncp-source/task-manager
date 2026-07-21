@@ -188,7 +188,7 @@
                     <p id="modal-desc" class="text-gray-700 mt-1 text-sm bg-gray-50 p-3 rounded-lg border border-gray-100"></p>
                 </div>
 
-                <div class="grid grid-cols-3 gap-4">
+                <div class="grid grid-cols-3 gap-4 items-end">
                     <div>
                         <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Assigned Employee</label>
                         <p id="modal-assignee" class="text-sm font-medium text-gray-800 mt-1"></p>
@@ -205,6 +205,14 @@
                             <option value="Done">Done</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- Delete Option Inside Modal -->
+                <div class="pt-2 flex justify-end border-t border-gray-100">
+                    <button onclick="deleteCurrentTaskFromModal()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span>Delete Task</span>
+                    </button>
                 </div>
 
                 <!-- Attachments Section -->
@@ -370,7 +378,8 @@
             const statusFilter = document.getElementById('admin-filter-status').value;
 
             const filteredTasks = tasks.filter(task => {
-                const matchesSearch = task.title.toLowerCase().includes(searchQuery) || (task.assignee && task.assignee.toLowerCase().includes(searchQuery));
+                const assignedName = task.assignee || task.assignedTo || '';
+                const matchesSearch = task.title.toLowerCase().includes(searchQuery) || assignedName.toLowerCase().includes(searchQuery);
                 const matchesDate = !dateFilter || task.deadline === dateFilter;
                 const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
                 return matchesSearch && matchesDate && matchesStatus;
@@ -385,10 +394,11 @@
             }
 
             filteredTasks.forEach(task => {
+                const displayAssignee = task.assignee || task.assignedTo || 'Unassigned';
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="px-6 py-4 font-medium text-gray-800">${task.title}</td>
-                    <td class="px-6 py-4 text-gray-600">${task.assignee || 'Unassigned'}</td>
+                    <td class="px-6 py-4 text-gray-600">${displayAssignee}</td>
                     <td class="px-6 py-4 text-gray-600"><i class="fa-regular fa-calendar text-gray-400 mr-1"></i>${task.deadline || 'No deadline'}</td>
                     <td class="px-6 py-4">
                         <span class="px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(task.status)}">${task.status}</span>
@@ -436,8 +446,9 @@
                     body: JSON.stringify({
                         title,
                         description: desc,
-                        assignee,
-                        assigneeKey,
+                        assignee: assignee,
+                        assignedTo: assignee,
+                        assigneeKey: assigneeKey,
                         deadline,
                         status: 'To Do',
                         attachments: [],
@@ -464,6 +475,20 @@
             }
         }
 
+        async function deleteCurrentTaskFromModal() {
+            if (currentActiveTaskId) {
+                if (confirm("Are you sure you want to delete this task from the details view?")) {
+                    try {
+                        await fetch(`/api/tasks?id=${currentActiveTaskId}`, { method: 'DELETE' });
+                        closeModal();
+                        await loadTasksFromApi();
+                    } catch (err) {
+                        console.error('Error deleting task from modal:', err);
+                    }
+                }
+            }
+        }
+
         // --- EMPLOYEE FUNCTIONS ---
         function renderEmployeeDashboard() {
             const grid = document.getElementById('employee-task-grid');
@@ -473,7 +498,8 @@
             const dateFilter = document.getElementById('employee-filter-date').value;
 
             const myTasks = tasks.filter(t => {
-                const matchesUser = t.assigneeKey === currentUser.key || t.assignee === currentUser.name;
+                const taskAssignee = t.assignee || t.assignedTo || '';
+                const matchesUser = t.assigneeKey === currentUser.key || taskAssignee === currentUser.name;
                 const matchesSearch = t.title.toLowerCase().includes(searchQuery);
                 const matchesDate = !dateFilter || t.deadline === dateFilter;
                 return matchesUser && matchesSearch && matchesDate;
@@ -526,7 +552,7 @@
             
             document.getElementById('modal-title').innerText = task.title;
             document.getElementById('modal-desc').innerText = task.description || 'No description provided.';
-            document.getElementById('modal-assignee').innerText = task.assignee || 'Unassigned';
+            document.getElementById('modal-assignee').innerText = task.assignee || task.assignedTo || 'Unassigned';
             document.getElementById('modal-deadline').innerText = task.deadline || 'No deadline';
             document.getElementById('modal-status-select').value = task.status;
 

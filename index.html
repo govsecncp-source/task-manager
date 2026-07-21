@@ -336,6 +336,49 @@
         let currentActiveTaskId = null;
         let tasks = []; // Loaded from backend API
 
+        const SESSION_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes timeout
+
+        // Check active session on load using localStorage & session timeout check
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('taskManagerUser');
+            const savedTimestamp = localStorage.getItem('taskManagerLoginTime');
+
+            if (savedUser && savedTimestamp) {
+                const now = new Date().getTime();
+                const elapsed = now - parseInt(savedTimestamp, 10);
+
+                if (elapsed < SESSION_TIMEOUT_MS) {
+                    currentUser = JSON.parse(savedUser);
+                    // Refresh session timestamp on load/refresh interaction
+                    localStorage.setItem('taskManagerLoginTime', now.toString());
+
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('app-container').classList.remove('hidden');
+                    document.getElementById('user-badge').innerText = `${currentUser.name} (${currentUser.role.toUpperCase()})`;
+
+                    loadTasksFromApi();
+                } else {
+                    // Session expired (> 20 mins)
+                    logout();
+                }
+            }
+        });
+
+        // Periodically check session timeout every minute
+        setInterval(() => {
+            if (currentUser) {
+                const savedTimestamp = localStorage.getItem('taskManagerLoginTime');
+                if (savedTimestamp) {
+                    const now = new Date().getTime();
+                    const elapsed = now - parseInt(savedTimestamp, 10);
+                    if (elapsed >= SESSION_TIMEOUT_MS) {
+                        alert('Session expired due to inactivity (20 minutes). Please sign in again.');
+                        logout();
+                    }
+                }
+            }
+        }, 60000);
+
         async function loadTasksFromApi() {
             try {
                 const res = await fetch('/api/tasks');
@@ -367,6 +410,10 @@
                 currentUser = { role: 'employee', name: `Subject ${formattedNumber}`, key: roleSelect };
             }
 
+            // Persist session and login timestamp in localStorage
+            localStorage.setItem('taskManagerUser', JSON.stringify(currentUser));
+            localStorage.setItem('taskManagerLoginTime', new Date().getTime().toString());
+
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-container').classList.remove('hidden');
             document.getElementById('user-badge').innerText = `${currentUser.name} (${currentUser.role.toUpperCase()})`;
@@ -376,6 +423,8 @@
 
         function logout() {
             currentUser = null;
+            localStorage.removeItem('taskManagerUser');
+            localStorage.removeItem('taskManagerLoginTime');
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('app-container').classList.add('hidden');
             document.getElementById('login-password').value = '';
@@ -748,7 +797,6 @@
                 alert('Please type a comment before sending.');
                 return;
             }
-            // Show confirmation popup before sending
             document.getElementById('confirm-popup').classList.remove('hidden');
             document.getElementById('confirm-popup').classList.add('flex');
         }
@@ -776,7 +824,6 @@
                         body: JSON.stringify(task)
                     });
                     
-                    // Show success popup after successful send
                     document.getElementById('success-popup-message').innerText = "Your comment has been sent successfully.";
                     document.getElementById('success-popup').classList.remove('hidden');
                     document.getElementById('success-popup').classList.add('flex');

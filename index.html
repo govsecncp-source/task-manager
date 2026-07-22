@@ -280,7 +280,7 @@
     <div id="create-task-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
             <h3 class="font-bold text-lg text-gray-800 mb-4">Create New Task</h3>
-            <form onsubmit="handleCreateTask(event)" class="space-y-4">
+            <form onsubmit="promptCreateTaskPreview(event)" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
                     <input type="text" id="new-title" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
@@ -305,11 +305,58 @@
                         </select>
                     </div>
                     <div>
-                        <button type="button" onclick="closeCreateTaskModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Create</button>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+                        <input type="date" id="new-deadline" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
                     </div>
                 </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeCreateTaskModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Create</button>
+                </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ================= CREATE TASK PREVIEW & CONFIRMATION MODAL ================= -->
+    <div id="create-preview-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-xl mb-2">
+                    <i class="fa-solid fa-eye"></i>
+                </div>
+                <h3 class="font-bold text-lg text-gray-800">Task Preview</h3>
+                <p class="text-xs text-gray-500">Please review the task details before confirmation.</p>
+            </div>
+            
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3 text-sm">
+                <div>
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Task Title</span>
+                    <p id="preview-title" class="font-medium text-gray-800"></p>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Description</span>
+                    <p id="preview-desc" class="text-gray-600 text-xs bg-white p-2 rounded border border-gray-100"></p>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Assigned To</span>
+                        <p id="preview-assignee" class="font-medium text-gray-800 text-xs"></p>
+                    </div>
+                    <div>
+                        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Deadline</span>
+                        <p id="preview-deadline" class="font-medium text-red-600 text-xs"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex space-x-2 pt-2">
+                <button onclick="closeCreatePreviewModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm font-medium transition">
+                    Back to Edit
+                </button>
+                <button onclick="confirmAndCreateTask()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition">
+                    Confirm & Create
+                </button>
+            </div>
         </div>
     </div>
 
@@ -331,10 +378,10 @@
         let currentUser = null;
         let currentActiveTaskId = null;
         let tasks = [];
+        let pendingTaskData = null; // Temporary holding variable for task preview data
 
         const SESSION_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes timeout
 
-        // Persistent local storage backup fallback for tasks to ensure permanent retention until explicit admin deletion
         function getPersistentTasks() {
             const saved = localStorage.getItem('gs_ncp_tasks_persistent');
             if (saved) {
@@ -347,7 +394,6 @@
             localStorage.setItem('gs_ncp_tasks_persistent', JSON.stringify(taskList));
         }
 
-        // Check active session on load using localStorage & session timeout check
         window.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('taskManagerUser');
             const savedTimestamp = localStorage.getItem('taskManagerLoginTime');
@@ -371,7 +417,6 @@
             }
         });
 
-        // Periodically check session timeout every minute
         setInterval(() => {
             if (currentUser) {
                 const savedTimestamp = localStorage.getItem('taskManagerLoginTime');
@@ -394,7 +439,6 @@
                     tasks = data.tasks;
                     savePersistentTasks(tasks);
                 } else {
-                    // Fallback to localStorage persistent tasks if backend returns empty
                     const localPersistent = getPersistentTasks();
                     tasks = localPersistent || data.tasks || [];
                 }
@@ -530,7 +574,8 @@
             document.getElementById('create-task-modal').classList.remove('flex');
         }
 
-        async function handleCreateTask(event) {
+        // Trigger Preview & Confirmation popup when user clicks Create in the form
+        function promptCreateTaskPreview(event) {
             event.preventDefault();
             const title = document.getElementById('new-title').value;
             const desc = document.getElementById('new-desc').value;
@@ -540,7 +585,7 @@
             const assigneeNum = assignee.replace('Subject 0', '');
             const assigneeKey = `user${assigneeNum}`;
 
-            const newTask = {
+            pendingTaskData = {
                 id: Date.now(),
                 title,
                 description: desc,
@@ -553,22 +598,48 @@
                 comments: []
             };
 
-            tasks.push(newTask);
-            savePersistentTasks(tasks);
+            // Populate Preview Modal
+            document.getElementById('preview-title').innerText = title;
+            document.getElementById('preview-desc').innerText = desc;
+            document.getElementById('preview-assignee').innerText = assignee;
+            document.getElementById('preview-deadline').innerText = deadline;
 
-            try {
-                await fetch('/api/tasks', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newTask)
-                });
-            } catch (err) {
-                console.error('Error syncing new task to backend:', err);
-            }
-
+            // Hide creation form modal and open preview modal
             closeCreateTaskModal();
-            event.target.reset();
-            renderApp();
+            document.getElementById('create-preview-modal').classList.remove('hidden');
+            document.getElementById('create-preview-modal').classList.add('flex');
+        }
+
+        function closeCreatePreviewModal() {
+            document.getElementById('create-preview-modal').classList.add('hidden');
+            document.getElementById('create-preview-modal').classList.remove('flex');
+            // Re-open creation form modal if they want to edit
+            openCreateTaskModal();
+        }
+
+        async function confirmAndCreateTask() {
+            if (pendingTaskData) {
+                tasks.push(pendingTaskData);
+                savePersistentTasks(tasks);
+
+                try {
+                    await fetch('/api/tasks', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(pendingTaskData)
+                    });
+                } catch (err) {
+                    console.error('Error syncing new task to backend:', err);
+                }
+
+                pendingTaskData = null;
+                document.getElementById('create-preview-modal').classList.add('hidden');
+                document.getElementById('create-preview-modal').classList.remove('flex');
+                
+                // Reset form inputs
+                document.querySelector('#create-task-modal form').reset();
+                renderApp();
+            }
         }
 
         async function deleteTask(taskId) {

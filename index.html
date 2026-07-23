@@ -454,29 +454,35 @@
             const assignee = document.getElementById('new-assignee').value;
             const deadline = document.getElementById('new-deadline').value;
             
-            const assigneeNum = assignee.replace('Subject 0', '');
+            const assigneeNum = assignee.replace('Subject ', '');
             const assigneeKey = `user${assigneeNum}`;
 
             try {
-                await fetch(`${BACKEND_URL}/api/tasks`, {
+                const response = await fetch(`${BACKEND_URL}/api/tasks`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        title,
-                        description,
-                        assignee,
-                        assigneeKey,
-                        deadline,
+                        title: title,
+                        description: description,
+                        assignee: assignee,
+                        assigneeKey: assigneeKey,
+                        deadline: deadline,
                         status: 'To Do',
                         attachments: [],
                         comments: []
                     })
                 });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create task on server');
+                }
+
                 closeCreateTaskModal();
                 event.target.reset();
                 await loadTasksFromApi();
             } catch (err) {
                 console.error('Error creating task:', err);
+                alert('Could not create task. Please check your network connection.');
             }
         }
 

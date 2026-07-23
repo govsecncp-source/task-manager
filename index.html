@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Manager - Issue Tracker</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 font-sans text-gray-900 antialiased">
 
-    <!-- ================= AUTH / LOGIN SCREEN ================= -->
+    <!-- LOGIN SCREEN -->
     <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-900 p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-8">
             <div class="text-center mb-8">
@@ -20,11 +18,11 @@
                 <p class="text-sm text-gray-500">Sign in to your workspace</p>
             </div>
             
-            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+            <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Select Role / Profile</label>
-                    <select id="login-role" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <option value="admin">Admin (Full Control & Dashboard)</option>
+                    <select id="login-role" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500">
+                        <option value="admin">Admin (Full Control)</option>
                         <option value="user1">Subject 01</option>
                         <option value="user2">Subject 02</option>
                         <option value="user3">Subject 03</option>
@@ -38,174 +36,98 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="login-password" placeholder="Enter your password" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                    <input type="password" id="login-password" placeholder="Enter password" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500" required>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition duration-200">
-                    Sign In
-                </button>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition">Sign In</button>
             </form>
         </div>
     </div>
 
-    <!-- ================= LOADING OVERLAY ================= -->
+    <!-- LOADING OVERLAY -->
     <div id="loading-overlay" class="hidden min-h-screen flex flex-col items-center justify-center bg-gray-50 space-y-4">
         <i class="fa-solid fa-spinner fa-spin text-blue-600 text-4xl"></i>
-        <p class="text-gray-600 font-medium text-sm">Waking up backend server & loading tasks...</p>
+        <p class="text-gray-600 font-medium text-sm">Loading tasks from database...</p>
     </div>
 
-    <!-- ================= MAIN APP CONTAINER ================= -->
+    <!-- MAIN APP CONTAINER -->
     <div id="app-container" class="hidden min-h-screen flex flex-col">
-        
-        <!-- Top Navigation Bar -->
         <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
             <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <i class="fa-solid fa-layer-group text-blue-600 text-2xl"></i>
                     <span class="text-xl font-bold tracking-tight">Task Manager</span>
                 </div>
-                
                 <div class="flex items-center space-x-4">
                     <span id="user-badge" class="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full"></span>
-                    <button onclick="logout()" class="text-gray-500 hover:text-red-600 transition" title="Logout">
-                        <i class="fa-solid fa-right-from-bracket text-lg"></i>
-                    </button>
+                    <button onclick="logout()" class="text-gray-500 hover:text-red-600 transition"><i class="fa-solid fa-right-from-bracket text-lg"></i></button>
                 </div>
             </div>
         </header>
 
-        <!-- Main Content Area -->
         <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
-
-            <!-- ADMIN DASHBOARD VIEW -->
+            <!-- ADMIN DASHBOARD -->
             <div id="admin-view" class="hidden space-y-6">
                 <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold text-gray-800">Admin Dashboard</h2>
                     <button onclick="openCreateTaskModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>Create Task</span>
+                        <i class="fa-solid fa-plus"></i><span>Create Task</span>
                     </button>
                 </div>
 
-                <!-- Stats Overview Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                        <p class="text-sm font-medium text-gray-500">Total Tasks</p>
-                        <h3 id="stat-total" class="text-3xl font-bold text-gray-800 mt-1">0</h3>
-                    </div>
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                        <p class="text-sm font-medium text-gray-500">To Do</p>
-                        <h3 id="stat-todo" class="text-3xl font-bold text-yellow-600 mt-1">0</h3>
-                    </div>
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                        <p class="text-sm font-medium text-gray-500">In Progress</p>
-                        <h3 id="stat-progress" class="text-3xl font-bold text-blue-600 mt-1">0</h3>
-                    </div>
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                        <p class="text-sm font-medium text-gray-500">Done</p>
-                        <h3 id="stat-done" class="text-3xl font-bold text-green-600 mt-1">0</h3>
-                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm"><p class="text-sm font-medium text-gray-500">Total Tasks</p><h3 id="stat-total" class="text-3xl font-bold text-gray-800 mt-1">0</h3></div>
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm"><p class="text-sm font-medium text-gray-500">To Do</p><h3 id="stat-todo" class="text-3xl font-bold text-yellow-600 mt-1">0</h3></div>
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm"><p class="text-sm font-medium text-gray-500">In Progress</p><h3 id="stat-progress" class="text-3xl font-bold text-blue-600 mt-1">0</h3></div>
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm"><p class="text-sm font-medium text-gray-500">Done</p><h3 id="stat-done" class="text-3xl font-bold text-green-600 mt-1">0</h3></div>
                 </div>
 
-                <!-- Admin Filter Bar -->
-                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-wrap gap-4 items-center justify-between">
-                    <div class="flex items-center space-x-3 flex-1 min-w-[240px]">
-                        <i class="fa-solid fa-filter text-gray-400"></i>
-                        <input type="text" id="admin-search" oninput="renderAdminDashboard()" placeholder="Search by title..." class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <input type="date" id="admin-filter-date" onchange="renderAdminDashboard()" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <select id="admin-filter-status" onchange="renderAdminDashboard()" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                            <option value="All">Filter Status: All</option>
-                            <option value="To Do">To Do</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Done">Done</option>
-                        </select>
-                        <button onclick="clearAdminFilters()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-1.5 rounded-lg text-sm font-medium transition flex items-center space-x-1.5 border border-gray-300 shadow-sm">
-                            <i class="fa-solid fa-rotate-right text-xs"></i>
-                            <span>Reset</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- All Tasks Table -->
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    <th class="px-6 py-3">Task Title</th>
-                                    <th class="px-6 py-3">Assigned To</th>
-                                    <th class="px-6 py-3">Deadline</th>
-                                    <th class="px-6 py-3">Status</th>
-                                    <th class="px-6 py-3">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-task-list" class="divide-y divide-gray-200 text-sm">
-                                <!-- Populated dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                                <th class="px-6 py-3">Title</th>
+                                <th class="px-6 py-3">Assignee</th>
+                                <th class="px-6 py-3">Deadline</th>
+                                <th class="px-6 py-3">Status</th>
+                                <th class="px-6 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-task-list" class="divide-y divide-gray-200 text-sm"></tbody>
+                    </table>
                 </div>
             </div>
 
             <!-- EMPLOYEE VIEW -->
             <div id="employee-view" class="hidden space-y-6">
-                <div class="flex justify-between items-center flex-wrap gap-4">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800">My Assigned Tasks</h2>
-                        <p class="text-sm text-gray-500">Only you can view and update your assigned tasks.</p>
-                    </div>
-                    <!-- Employee Filter Bar -->
-                    <div class="flex items-center space-x-3 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
-                        <i class="fa-solid fa-filter text-gray-400 ml-2"></i>
-                        <input type="text" id="employee-search" oninput="renderEmployeeDashboard()" placeholder="Search tasks..." class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <input type="date" id="employee-filter-date" onchange="renderEmployeeDashboard()" class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <button onclick="clearEmployeeFilters()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-xs font-medium transition flex items-center space-x-1 border border-gray-300 shadow-sm">
-                            <i class="fa-solid fa-rotate-right text-[10px]"></i>
-                            <span>Reset</span>
-                        </button>
-                    </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">My Assigned Tasks</h2>
+                    <p class="text-sm text-gray-500">Update status, upload files (images/PDFs), and add comments.</p>
                 </div>
-
-                <!-- Kanban / Task Grid for Employee -->
-                <div id="employee-task-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Columns populated dynamically -->
-                </div>
+                <div id="employee-task-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
             </div>
-
         </main>
     </div>
 
-    <!-- ================= TASK DETAIL & INTERACTION MODAL ================= -->
+    <!-- TASK DETAIL & INTERACTION MODAL -->
     <div id="task-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-            <!-- Modal Header -->
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                 <h3 id="modal-title" class="font-bold text-lg text-gray-800">Task Details</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fa-solid fa-xmark text-xl"></i>
-                </button>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             
-            <!-- Modal Body -->
             <div class="p-6 overflow-y-auto space-y-6 flex-1">
                 <div>
-                    <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Description</label>
+                    <label class="text-xs font-semibold text-gray-400 uppercase">Description</label>
                     <p id="modal-desc" class="text-gray-700 mt-1 text-sm bg-gray-50 p-3 rounded-lg border border-gray-100"></p>
                 </div>
 
                 <div class="grid grid-cols-3 gap-4">
+                    <div><label class="text-xs font-semibold text-gray-400 uppercase">Assignee</label><p id="modal-assignee" class="text-sm font-medium text-gray-800 mt-1"></p></div>
+                    <div><label class="text-xs font-semibold text-gray-400 uppercase">Deadline</label><p id="modal-deadline" class="text-sm font-medium text-red-600 mt-1"></p></div>
                     <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Assigned Employee</label>
-                        <p id="modal-assignee" class="text-sm font-medium text-gray-800 mt-1"></p>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Deadline</label>
-                        <p id="modal-deadline" class="text-sm font-medium text-red-600 mt-1"></p>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Status Update</label>
-                        <select id="modal-status-select" onchange="updateTaskStatus(this.value)" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <label class="text-xs font-semibold text-gray-400 uppercase">Status</label>
+                        <select id="modal-status-select" onchange="updateTaskStatus(this.value)" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500">
                             <option value="To Do">To Do</option>
                             <option value="In Progress">In Progress</option>
                             <option value="Done">Done</option>
@@ -213,87 +135,63 @@
                     </div>
                 </div>
 
-                <!-- Attachments Section -->
+                <!-- Attachments Section (Images / PDFs) -->
                 <div>
-                    <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">Attachments</label>
-                    <div id="modal-attachments-list" class="space-y-2 mb-3">
-                        <!-- Attachment items -->
-                    </div>
+                    <label class="text-xs font-semibold text-gray-400 uppercase mb-2 block">Attachments (Images & PDFs)</label>
+                    <div id="modal-attachments-list" class="space-y-2 mb-3"></div>
                     <div class="flex items-center space-x-2">
-                        <input type="file" id="file-input" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <button onclick="uploadAttachment()" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition">Upload</button>
+                        <input type="file" id="file-input" accept="image/*,.pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700">
+                        <button onclick="uploadAttachment()" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700">Upload</button>
                     </div>
                 </div>
 
                 <!-- Comments Section -->
                 <div class="border-t border-gray-200 pt-4">
-                    <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 block">Comments & Discussion</label>
-                    <div id="modal-comments-list" class="space-y-3 mb-4 max-h-40 overflow-y-auto">
-                        <!-- Comment items -->
-                    </div>
+                    <label class="text-xs font-semibold text-gray-400 uppercase mb-3 block">Comments & Discussion</label>
+                    <div id="modal-comments-list" class="space-y-3 mb-4 max-h-40 overflow-y-auto"></div>
                     <div class="flex space-x-2">
-                        <input type="text" id="comment-input" placeholder="Write a comment..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <button onclick="addComment()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">Send</button>
+                        <input type="text" id="comment-input" placeholder="Write a comment..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                        <button onclick="addComment()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Send</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ================= CREATE TASK MODAL (ADMIN ONLY) ================= -->
+    <!-- CREATE TASK MODAL -->
     <div id="create-task-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
             <h3 class="font-bold text-lg text-gray-800 mb-4">Create New Task</h3>
             <form onsubmit="handleCreateTask(event)" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
-                    <input type="text" id="new-title" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea id="new-desc" rows="3" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" required></textarea>
-                </div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Title</label><input type="text" id="new-title" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm" required></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Description</label><textarea id="new-desc" rows="3" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm" required></textarea></div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Assign to Employee</label>
-                        <select id="new-assignee" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                            <option value="Subject 01">Subject 01</option>
-                            <option value="Subject 02">Subject 02</option>
-                            <option value="Subject 03">Subject 03</option>
-                            <option value="Subject 04">Subject 04</option>
-                            <option value="Subject 05">Subject 05</option>
-                            <option value="Subject 06">Subject 06</option>
-                            <option value="Subject 07">Subject 07</option>
-                            <option value="Subject 08">Subject 08</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
+                        <select id="new-assignee" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+                            <option value="Subject 01">Subject 01</option><option value="Subject 02">Subject 02</option>
+                            <option value="Subject 03">Subject 03</option><option value="Subject 04">Subject 04</option>
+                            <option value="Subject 05">Subject 05</option><option value="Subject 06">Subject 06</option>
+                            <option value="Subject 07">Subject 07</option><option value="Subject 08">Subject 08</option>
                             <option value="Subject 09">Subject 09</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
-                        <input type="date" id="new-deadline" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
-                    </div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Deadline</label><input type="date" id="new-deadline" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm" required></div>
                 </div>
                 <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="closeCreateTaskModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Create</button>
+                    <button type="button" onclick="closeCreateTaskModal()" class="px-4 py-2 border text-gray-700 rounded-lg text-sm">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">Create</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <!-- SCRIPT LOGIC -->
     <script>
         const userPasswords = {
-            'admin': 'adminpass123',
-            'user1': 'subject01pass',
-            'user2': 'subject02pass',
-            'user3': 'subject03pass',
-            'user4': 'subject04pass',
-            'user5': 'subject05pass',
-            'user6': 'subject06pass',
-            'user7': 'subject07pass',
-            'user8': 'subject08pass',
-            'user9': 'subject09pass'
+            'admin': 'adminpass123', 'user1': 'subject01pass', 'user2': 'subject02pass',
+            'user3': 'subject03pass', 'user4': 'subject04pass', 'user5': 'subject05pass',
+            'user6': 'subject06pass', 'user7': 'subject07pass', 'user8': 'subject08pass', 'user9': 'subject09pass'
         };
 
         let currentUser = null;
@@ -317,7 +215,6 @@
                 const res = await fetch(`${BACKEND_URL}/api/tasks`);
                 const data = await res.json();
                 tasks = Array.isArray(data) ? data : (data.tasks || []);
-                
                 document.getElementById('loading-overlay').classList.add('hidden');
                 if (currentUser) {
                     document.getElementById('app-container').classList.remove('hidden');
@@ -325,7 +222,7 @@
                 }
             } catch (err) {
                 console.error('Error fetching tasks:', err);
-                document.getElementById('loading-overlay').innerHTML = `<p class="text-red-500 font-medium">Failed to connect to backend server. Please refresh later.</p>`;
+                document.getElementById('loading-overlay').innerHTML = `<p class="text-red-500 font-medium">Failed to connect to backend server.</p>`;
             }
         }
 
@@ -335,7 +232,7 @@
             const enteredPassword = document.getElementById('login-password').value;
 
             if (enteredPassword !== userPasswords[roleSelect]) {
-                alert('Incorrect password for this user account!');
+                alert('Incorrect password!');
                 return;
             }
             
@@ -343,16 +240,13 @@
                 currentUser = { role: 'admin', name: 'System Admin' };
             } else {
                 const userNumber = roleSelect.replace('user', '');
-                const formattedNumber = userNumber.padStart(2, '0');
-                currentUser = { role: 'employee', name: `Subject ${formattedNumber}`, key: roleSelect };
+                currentUser = { role: 'employee', name: `Subject ${userNumber.padStart(2, '0')}`, key: roleSelect };
             }
 
             localStorage.setItem('task_manager_user', JSON.stringify(currentUser));
-
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('loading-overlay').classList.remove('hidden');
             document.getElementById('user-badge').innerText = `${currentUser.name} (${currentUser.role.toUpperCase()})`;
-
             loadTasksFromApi();
         }
 
@@ -362,7 +256,6 @@
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('app-container').classList.add('hidden');
             document.getElementById('loading-overlay').classList.add('hidden');
-            document.getElementById('login-password').value = '';
         }
 
         function renderApp() {
@@ -377,202 +270,104 @@
             }
         }
 
-        function getStatusBadgeClass(status) {
-            if (status === 'To Do') return 'bg-yellow-100 text-yellow-800';
-            if (status === 'In Progress') return 'bg-blue-100 text-blue-800';
-            if (status === 'Done') return 'bg-green-100 text-green-800';
-            return 'bg-gray-100 text-gray-800';
-        }
-
-        // --- ADMIN FUNCTIONS ---
         function renderAdminDashboard() {
             document.getElementById('stat-total').innerText = tasks.length;
             document.getElementById('stat-todo').innerText = tasks.filter(t => t.status === 'To Do').length;
             document.getElementById('stat-progress').innerText = tasks.filter(t => t.status === 'In Progress').length;
             document.getElementById('stat-done').innerText = tasks.filter(t => t.status === 'Done').length;
 
-            const searchQuery = document.getElementById('admin-search').value.toLowerCase();
-            const dateFilter = document.getElementById('admin-filter-date').value;
-            const statusFilter = document.getElementById('admin-filter-status').value;
-
-            const filteredTasks = tasks.filter(task => {
-                const taskTitle = task.title || task.text || '';
-                const matchesSearch = taskTitle.toLowerCase().includes(searchQuery) || (task.assignee && task.assignee.toLowerCase().includes(searchQuery));
-                const matchesDate = !dateFilter || task.deadline === dateFilter;
-                const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
-                return matchesSearch && matchesDate && matchesStatus;
-            });
-
             const tbody = document.getElementById('admin-task-list');
-            tbody.innerHTML = '';
-            
-            if (filteredTasks.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 italic">No tasks match your filter criteria.</td></tr>`;
-                return;
-            }
+            tbody.innerHTML = tasks.length === '0' ? `<tr><td colspan="5" class="text-center py-4 text-gray-400">No tasks found</td></tr>` : '';
 
-            filteredTasks.forEach(task => {
+            tasks.forEach(task => {
                 const taskId = task._id || task.id;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="px-6 py-4 font-medium text-gray-800">${task.title || task.text}</td>
-                    <td class="px-6 py-4 text-gray-600">${task.assignee || 'Unassigned'}</td>
-                    <td class="px-6 py-4 text-gray-600"><i class="fa-regular fa-calendar text-gray-400 mr-1"></i>${task.deadline || 'No deadline'}</td>
-                    <td class="px-6 py-4">
-                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(task.status || 'To Do')}">${task.status || 'To Do'}</span>
-                    </td>
-                    <td class="px-6 py-4 space-x-3">
-                        <button onclick="openTaskModal('${taskId}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View / Comment</button>
-                        <button onclick="deleteTask('${taskId}')" class="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium">${task.title}</td>
+                        <td class="px-6 py-4 text-gray-600">${task.assignee}</td>
+                        <td class="px-6 py-4 text-gray-600">${task.deadline}</td>
+                        <td class="px-6 py-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">${task.status || 'To Do'}</span></td>
+                        <td class="px-6 py-4 space-x-2">
+                            <button onclick="openTaskModal('${taskId}')" class="text-blue-600 hover:underline text-sm">View & Files</button>
+                            <button onclick="deleteTask('${taskId}')" class="text-red-600 hover:underline text-sm">Delete</button>
+                        </td>
+                    </tr>`;
             });
         }
 
-        function clearAdminFilters() {
-            document.getElementById('admin-search').value = '';
-            document.getElementById('admin-filter-date').value = '';
-            document.getElementById('admin-filter-status').value = 'All';
-            renderAdminDashboard();
-        }
-
-        function openCreateTaskModal() {
-            document.getElementById('create-task-modal').classList.remove('hidden');
-            document.getElementById('create-task-modal').classList.add('flex');
-        }
-
-        function closeCreateTaskModal() {
-            document.getElementById('create-task-modal').classList.add('hidden');
-            document.getElementById('create-task-modal').classList.remove('flex');
-        }
-
-        async function handleCreateTask(event) {
-            event.preventDefault();
-            const title = document.getElementById('new-title').value;
-            const description = document.getElementById('new-desc').value;
-            const assignee = document.getElementById('new-assignee').value;
-            const deadline = document.getElementById('new-deadline').value;
-            
-            const assigneeNum = assignee.replace('Subject ', '');
-            const assigneeKey = `user${assigneeNum}`;
-
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/tasks`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        title: title,
-                        description: description,
-                        assignee: assignee,
-                        assigneeKey: assigneeKey,
-                        deadline: deadline,
-                        status: 'To Do',
-                        attachments: [],
-                        comments: []
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Server error response:', errorText);
-                    throw new Error(`Server returned status ${response.status}: ${errorText}`);
-                }
-
-                closeCreateTaskModal();
-                event.target.reset();
-                await loadTasksFromApi();
-            } catch (err) {
-                console.error('Error creating task:', err);
-                alert('Could not create task. Check browser console (F12) for details.');
-            }
-        }
-
-        async function deleteTask(taskId) {
-            if (confirm("Are you sure you want to delete this task?")) {
-                try {
-                    await fetch(`${BACKEND_URL}/api/tasks/${taskId}`, { method: 'DELETE' });
-                    await loadTasksFromApi();
-                } catch (err) {
-                    console.error('Error deleting task:', err);
-                }
-            }
-        }
-
-        // --- EMPLOYEE FUNCTIONS ---
         function renderEmployeeDashboard() {
             const grid = document.getElementById('employee-task-grid');
             grid.innerHTML = '';
+            const myTasks = tasks.filter(t => t.assigneeKey === currentUser.key || t.assignee === currentUser.name);
 
-            const searchQuery = document.getElementById('employee-search').value.toLowerCase();
-            const dateFilter = document.getElementById('employee-filter-date').value;
-
-            const myTasks = tasks.filter(t => {
-                const matchesUser = t.assigneeKey === currentUser.key || t.assignee === currentUser.name;
-                const taskTitle = t.title || t.text || '';
-                const matchesSearch = taskTitle.toLowerCase().includes(searchQuery);
-                const matchesDate = !dateFilter || t.deadline === dateFilter;
-                return matchesUser && matchesSearch && matchesDate;
-            });
-
-            const statuses = ['To Do', 'In Progress', 'Done'];
-            statuses.forEach(status => {
+            ['To Do', 'In Progress', 'Done'].forEach(status => {
                 const columnTasks = myTasks.filter(t => (t.status || 'To Do') === status);
-                
-                const colDiv = document.createElement('div');
-                colDiv.className = 'bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex flex-col h-[70vh]';
-                
-                let cardsHtml = columnTasks.map(task => {
-                    const taskId = task._id || task.id;
-                    return `
-                        <div onclick="openTaskModal('${taskId}')" class="bg-gray-50 border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-md transition">
-                            <h4 class="font-semibold text-gray-800 text-sm mb-1">${task.title || task.text}</h4>
-                            <p class="text-xs text-gray-500 line-clamp-2">${task.description || ''}</p>
-                            <div class="mt-2 text-xs text-red-500 font-medium">
-                                <i class="fa-regular fa-clock mr-1"></i>Due: ${task.deadline || 'None'}
-                            </div>
-                            <div class="mt-3 flex items-center justify-between text-xs text-gray-400">
-                                <span><i class="fa-solid fa-paperclip"></i> ${task.attachments ? task.attachments.length : 0}</span>
-                                <span><i class="fa-solid fa-comments"></i> ${task.comments ? task.comments.length : 0}</span>
-                            </div>
+                let cards = columnTasks.map(task => `
+                    <div onclick="openTaskModal('${task._id || task.id}')" class="bg-gray-50 border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-md">
+                        <h4 class="font-semibold text-sm mb-1">${task.title}</h4>
+                        <p class="text-xs text-gray-500 line-clamp-2">${task.description}</p>
+                        <div class="mt-3 flex justify-between text-xs text-gray-400">
+                            <span><i class="fa-solid fa-paperclip"></i> ${task.attachments?.length || 0}</span>
+                            <span><i class="fa-solid fa-comments"></i> ${task.comments?.length || 0}</span>
                         </div>
-                    `;
-                }).join('');
+                    </div>`).join('');
 
-                colDiv.innerHTML = `
-                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">
-                        <h3 class="font-bold text-gray-700 text-sm">${status}</h3>
-                        <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-semibold">${columnTasks.length}</span>
-                    </div>
-                    <div class="flex-1 overflow-y-auto space-y-3">
-                        ${cardsHtml || '<p class="text-xs text-gray-400 text-center py-8">No tasks here</p>'}
-                    </div>
-                `;
-                grid.appendChild(colDiv);
+                grid.innerHTML += `
+                    <div class="bg-white rounded-xl border p-4 shadow-sm flex flex-col h-[70vh]">
+                        <h3 class="font-bold text-gray-700 text-sm mb-3 pb-2 border-b">${status} (${columnTasks.length})</h3>
+                        <div class="flex-1 overflow-y-auto space-y-3">${cards || '<p class="text-xs text-gray-400 text-center py-6">No tasks</p>'}</div>
+                    </div>`;
             });
         }
 
-        function clearEmployeeFilters() {
-            document.getElementById('employee-search').value = '';
-            document.getElementById('employee-filter-date').value = '';
-            renderEmployeeDashboard();
+        function openCreateTaskModal() { document.getElementById('create-task-modal').classList.remove('hidden'); document.getElementById('create-task-modal').classList.add('flex'); }
+        function closeCreateTaskModal() { document.getElementById('create-task-modal').classList.add('hidden'); document.getElementById('create-task-modal').classList.remove('flex'); }
+
+        async function handleCreateTask(event) {
+            event.preventDefault();
+            const assignee = document.getElementById('new-assignee').value;
+            const payload = {
+                title: document.getElementById('new-title').value,
+                description: document.getElementById('new-desc').value,
+                assignee: assignee,
+                assigneeKey: `user${assignee.replace('Subject ', '')}`,
+                deadline: document.getElementById('new-deadline').value,
+                status: 'To Do',
+                attachments: [],
+                comments: []
+            };
+
+            await fetch(`${BACKEND_URL}/api/tasks`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            closeCreateTaskModal();
+            event.target.reset();
+            loadTasksFromApi();
         }
 
-        // --- SHARED MODAL & INTERACTION LOGIC ---
+        async function deleteTask(taskId) {
+            if (confirm("Delete this task?")) {
+                await fetch(`${BACKEND_URL}/api/tasks/${taskId}`, { method: 'DELETE' });
+                loadTasksFromApi();
+            }
+        }
+
         function openTaskModal(taskId) {
             currentActiveTaskId = taskId;
             const task = tasks.find(t => (t._id || t.id) === taskId);
             if (!task) return;
             
-            document.getElementById('modal-title').innerText = task.title || task.text;
-            document.getElementById('modal-desc').innerText = task.description || 'No description provided.';
-            document.getElementById('modal-assignee').innerText = task.assignee || 'Unassigned';
-            document.getElementById('modal-deadline').innerText = task.deadline || 'No deadline';
+            document.getElementById('modal-title').innerText = task.title;
+            document.getElementById('modal-desc').innerText = task.description;
+            document.getElementById('modal-assignee').innerText = task.assignee;
+            document.getElementById('modal-deadline').innerText = task.deadline;
             document.getElementById('modal-status-select').value = task.status || 'To Do';
 
             renderAttachments(task);
             renderComments(task);
-
             document.getElementById('task-modal').classList.remove('hidden');
             document.getElementById('task-modal').classList.add('flex');
         }
@@ -580,84 +375,68 @@
         function closeModal() {
             document.getElementById('task-modal').classList.add('hidden');
             document.getElementById('task-modal').classList.remove('flex');
-            currentActiveTaskId = null;
             loadTasksFromApi();
         }
 
         async function updateTaskStatus(newStatus) {
             if (!currentActiveTaskId) return;
-            try {
-                await fetch(`${BACKEND_URL}/api/tasks/${currentActiveTaskId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: newStatus })
-                });
-                await loadTasksFromApi();
-            } catch (err) {
-                console.error('Error updating status:', err);
-            }
+            await fetch(`${BACKEND_URL}/api/tasks/${currentActiveTaskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
         }
 
         function renderAttachments(task) {
             const list = document.getElementById('modal-attachments-list');
-            list.innerHTML = '';
-            const attachments = task.attachments || [];
-            if (attachments.length === 0) {
-                list.innerHTML = `<p class="text-xs text-gray-400 italic">No attachments added yet.</p>`;
-                return;
-            }
-            attachments.forEach(att => {
-                list.innerHTML += `
-                    <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs">
-                        <span class="font-medium text-gray-700"><i class="fa-solid fa-file mr-2 text-blue-500"></i>${att.name}</span>
-                    </div>
-                `;
-            });
+            list.innerHTML = (task.attachments || []).map(att => `
+                <div class="flex items-center justify-between bg-gray-50 border rounded p-2 text-xs">
+                    <span><i class="fa-solid fa-file-lines text-blue-500 mr-2"></i>${att.name}</span>
+                </div>`).join('') || '<p class="text-xs text-gray-400 italic">No attachments.</p>';
         }
 
-        function uploadAttachment() {
+        async function uploadAttachment() {
             const fileInput = document.getElementById('file-input');
             if (fileInput.files.length === 0) return;
             const fileName = fileInput.files[0].name;
-            
+
             const task = tasks.find(t => (t._id || t.id) === currentActiveTaskId);
-            if (task) {
-                if (!task.attachments) task.attachments = [];
-                task.attachments.push({ name: fileName });
-                renderAttachments(task);
-                fileInput.value = '';
-            }
+            if (!task.attachments) task.attachments = [];
+            task.attachments.push({ name: fileName });
+
+            await fetch(`${BACKEND_URL}/api/tasks/${currentActiveTaskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ attachments: task.attachments })
+            });
+            fileInput.value = '';
+            renderAttachments(task);
         }
 
         function renderComments(task) {
             const list = document.getElementById('modal-comments-list');
-            list.innerHTML = '';
-            const comments = task.comments || [];
-            if (comments.length === 0) {
-                list.innerHTML = `<p class="text-xs text-gray-400 italic">No comments yet.</p>`;
-                return;
-            }
-            comments.forEach(c => {
-                list.innerHTML += `
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs">
-                        <span class="font-bold text-gray-700">${c.user}:</span> <span class="text-gray-600">${c.text}</span>
-                    </div>
-                `;
-            });
+            list.innerHTML = (task.comments || []).map(c => `
+                <div class="bg-gray-50 border rounded p-2 text-xs">
+                    <span class="font-bold text-gray-700">${c.user}:</span> <span class="text-gray-600">${c.text}</span>
+                </div>`).join('') || '<p class="text-xs text-gray-400 italic">No comments yet.</p>';
         }
 
-        function addComment() {
+        async function addComment() {
             const input = document.getElementById('comment-input');
             const text = input.value.trim();
             if (!text) return;
 
             const task = tasks.find(t => (t._id || t.id) === currentActiveTaskId);
-            if (task) {
-                if (!task.comments) task.comments = [];
-                task.comments.push({ user: currentUser.name, text: text });
-                input.value = '';
-                renderComments(task);
-            }
+            if (!task.comments) task.comments = [];
+            task.comments.push({ user: currentUser.name, text: text });
+
+            await fetch(`${BACKEND_URL}/api/tasks/${currentActiveTaskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ comments: task.comments })
+            });
+            input.value = '';
+            renderComments(task);
         }
     </script>
 </body>

@@ -474,7 +474,9 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to create task on server');
+                    const errorText = await response.text();
+                    console.error('Server error response:', errorText);
+                    throw new Error(`Server returned status ${response.status}: ${errorText}`);
                 }
 
                 closeCreateTaskModal();
@@ -482,7 +484,7 @@
                 await loadTasksFromApi();
             } catch (err) {
                 console.error('Error creating task:', err);
-                alert('Could not create task. Please check your network connection.');
+                alert('Could not create task. Check browser console (F12) for details.');
             }
         }
 

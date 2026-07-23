@@ -292,7 +292,7 @@
 
         let currentUser = null;
         let currentActiveTaskId = null;
-        let tasks = [];
+        let tasks = []; 
         const BACKEND_URL = 'https://backend-lemon-beta-81.vercel.app';
 
         async function loadTasksFromApi() {
@@ -371,7 +371,8 @@
             const statusFilter = document.getElementById('admin-filter-status').value;
 
             const filteredTasks = tasks.filter(task => {
-                const matchesSearch = (task.title || '').toLowerCase().includes(searchQuery) || (task.assignee && task.assignee.toLowerCase().includes(searchQuery));
+                const taskTitle = task.title || task.text || '';
+                const matchesSearch = taskTitle.toLowerCase().includes(searchQuery) || (task.assignee && task.assignee.toLowerCase().includes(searchQuery));
                 const matchesDate = !dateFilter || task.deadline === dateFilter;
                 const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
                 return matchesSearch && matchesDate && matchesStatus;
@@ -474,8 +475,9 @@
             const dateFilter = document.getElementById('employee-filter-date').value;
 
             const myTasks = tasks.filter(t => {
-                const matchesUser = t.assigneeKey === currentUser.key || t.assignee === currentUser.name || currentUser.role === 'admin';
-                const matchesSearch = (t.title || t.text || '').toLowerCase().includes(searchQuery);
+                const matchesUser = t.assigneeKey === currentUser.key || t.assignee === currentUser.name;
+                const taskTitle = t.title || t.text || '';
+                const matchesSearch = taskTitle.toLowerCase().includes(searchQuery);
                 const matchesDate = !dateFilter || t.deadline === dateFilter;
                 return matchesUser && matchesSearch && matchesDate;
             });

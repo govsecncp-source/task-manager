@@ -47,6 +47,12 @@
         </div>
     </div>
 
+    <!-- ================= LOADING OVERLAY ================= -->
+    <div id="loading-overlay" class="hidden min-h-screen flex flex-col items-center justify-center bg-gray-50 space-y-4">
+        <i class="fa-solid fa-spinner fa-spin text-blue-600 text-4xl"></i>
+        <p class="text-gray-600 font-medium text-sm">Waking up backend server & loading tasks...</p>
+    </div>
+
     <!-- ================= MAIN APP CONTAINER ================= -->
     <div id="app-container" class="hidden min-h-screen flex flex-col">
         
@@ -295,13 +301,12 @@
         let tasks = []; 
         const BACKEND_URL = 'https://backend-lemon-beta-81.vercel.app';
 
-        // Check for existing logged-in user on initial page load
         window.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('task_manager_user');
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
                 document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app-container').classList.remove('hidden');
+                document.getElementById('loading-overlay').classList.remove('hidden');
                 document.getElementById('user-badge').innerText = `${currentUser.name} (${currentUser.role.toUpperCase()})`;
                 loadTasksFromApi();
             }
@@ -312,11 +317,15 @@
                 const res = await fetch(`${BACKEND_URL}/api/tasks`);
                 const data = await res.json();
                 tasks = Array.isArray(data) ? data : (data.tasks || []);
+                
+                document.getElementById('loading-overlay').classList.add('hidden');
                 if (currentUser) {
+                    document.getElementById('app-container').classList.remove('hidden');
                     renderApp();
                 }
             } catch (err) {
                 console.error('Error fetching tasks:', err);
+                document.getElementById('loading-overlay').innerHTML = `<p class="text-red-500 font-medium">Failed to connect to backend server. Please refresh later.</p>`;
             }
         }
 
@@ -338,11 +347,10 @@
                 currentUser = { role: 'employee', name: `Subject ${formattedNumber}`, key: roleSelect };
             }
 
-            // Save user session to localStorage to persist across refreshes
             localStorage.setItem('task_manager_user', JSON.stringify(currentUser));
 
             document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('loading-overlay').classList.remove('hidden');
             document.getElementById('user-badge').innerText = `${currentUser.name} (${currentUser.role.toUpperCase()})`;
 
             loadTasksFromApi();
@@ -350,9 +358,10 @@
 
         function logout() {
             currentUser = null;
-            localStorage.removeItem('task_manager_user'); // Clear session
+            localStorage.removeItem('task_manager_user');
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('loading-overlay').classList.add('hidden');
             document.getElementById('login-password').value = '';
         }
 

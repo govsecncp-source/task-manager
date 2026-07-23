@@ -139,12 +139,15 @@
                 <div>
                     <label class="text-xs font-semibold text-gray-400 uppercase mb-2 block">Attachments (Images & PDFs)</label>
                     <div id="modal-attachments-list" class="space-y-2 mb-3"></div>
-                    <!-- Instant upload input triggered via styled label -->
-                    <label class="cursor-pointer inline-flex items-center space-x-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <span>Upload Attachment</span>
-                        <input type="file" id="file-input" accept="image/*,.pdf" onchange="uploadAttachment()" class="hidden">
-                    </label>
+                    <!-- Instant upload input triggered via styled label with instant preview indicator -->
+                    <div class="flex items-center space-x-3">
+                        <label class="cursor-pointer inline-flex items-center space-x-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>Upload Attachment</span>
+                            <input type="file" id="file-input" accept="image/*,.pdf" onchange="uploadAttachment()" class="hidden">
+                        </label>
+                        <span id="upload-status-text" class="text-xs text-gray-400 italic"></span>
+                    </div>
                 </div>
 
                 <!-- Comments Section -->
@@ -381,6 +384,7 @@
             document.getElementById('modal-assignee').innerText = task.assignee;
             document.getElementById('modal-deadline').innerText = task.deadline;
             document.getElementById('modal-status-select').value = task.status || 'To Do';
+            document.getElementById('upload-status-text').innerText = '';
 
             renderAttachments(task);
             renderComments(task);
@@ -415,8 +419,12 @@
 
         async function uploadAttachment() {
             const fileInput = document.getElementById('file-input');
+            const statusText = document.getElementById('upload-status-text');
             if (fileInput.files.length === 0) return;
             const file = fileInput.files[0];
+
+            // Instant Name Preview
+            statusText.innerText = `Uploading: ${file.name}...`;
 
             const reader = new FileReader();
             reader.onload = async function(e) {
@@ -433,6 +441,7 @@
                 });
                 
                 fileInput.value = '';
+                statusText.innerText = '';
                 renderAttachments(task);
                 showConfirmation("File Uploaded", `Successfully uploaded "${file.name}".`);
             };

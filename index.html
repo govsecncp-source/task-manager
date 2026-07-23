@@ -139,10 +139,12 @@
                 <div>
                     <label class="text-xs font-semibold text-gray-400 uppercase mb-2 block">Attachments (Images & PDFs)</label>
                     <div id="modal-attachments-list" class="space-y-2 mb-3"></div>
-                    <div class="flex items-center space-x-2">
-                        <input type="file" id="file-input" accept="image/*,.pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700">
-                        <button onclick="uploadAttachment()" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700">Upload</button>
-                    </div>
+                    <!-- Hidden file input triggered by styled label -->
+                    <label class="cursor-pointer inline-flex items-center space-x-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Upload Attachment</span>
+                        <input type="file" id="file-input" accept="image/*,.pdf" onchange="uploadAttachment()" class="hidden">
+                    </label>
                 </div>
 
                 <!-- Comments Section -->
@@ -155,6 +157,18 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- STYLISH CONFIRMATION POPUP MODAL -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center transform transition-all scale-100 space-y-4">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-3xl">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h3 id="conf-title" class="text-xl font-bold text-gray-800">Success!</h3>
+            <p id="conf-message" class="text-sm text-gray-500">Your action was completed successfully.</p>
+            <button onclick="closeConfirmationModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl transition">OK</button>
         </div>
     </div>
 
@@ -346,12 +360,14 @@
             closeCreateTaskModal();
             event.target.reset();
             loadTasksFromApi();
+            showConfirmation("Task Created", "The new task has been created successfully.");
         }
 
         async function deleteTask(taskId) {
             if (confirm("Delete this task?")) {
                 await fetch(`${BACKEND_URL}/api/tasks/${taskId}`, { method: 'DELETE' });
                 loadTasksFromApi();
+                showConfirmation("Task Deleted", "The task has been deleted.");
             }
         }
 
@@ -385,6 +401,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
             });
+            showConfirmation("Status Updated", `Task status changed to ${newStatus}.`);
         }
 
         function renderAttachments(task) {
@@ -416,6 +433,7 @@
                 });
                 fileInput.value = '';
                 renderAttachments(task);
+                showConfirmation("File Uploaded", `Successfully uploaded "${file.name}".`);
             };
             reader.readAsDataURL(file);
         }
@@ -444,6 +462,21 @@
             });
             input.value = '';
             renderComments(task);
+            showConfirmation("Comment Sent", "Your comment has been posted successfully.");
+        }
+
+        function showConfirmation(title, message) {
+            document.getElementById('conf-title').innerText = title;
+            document.getElementById('conf-message').innerText = message;
+            const modal = document.getElementById('confirmation-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeConfirmationModal() {
+            const modal = document.getElementById('confirmation-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
     </script>
 </body>

@@ -295,6 +295,18 @@
         let tasks = []; 
         const BACKEND_URL = 'https://backend-lemon-beta-81.vercel.app';
 
+        // Check for existing logged-in user on initial page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('task_manager_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                document.getElementById('user-badge').innerText = `${currentUser.name} (${currentUser.role.toUpperCase()})`;
+                loadTasksFromApi();
+            }
+        });
+
         async function loadTasksFromApi() {
             try {
                 const res = await fetch(`${BACKEND_URL}/api/tasks`);
@@ -326,6 +338,9 @@
                 currentUser = { role: 'employee', name: `Subject ${formattedNumber}`, key: roleSelect };
             }
 
+            // Save user session to localStorage to persist across refreshes
+            localStorage.setItem('task_manager_user', JSON.stringify(currentUser));
+
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-container').classList.remove('hidden');
             document.getElementById('user-badge').innerText = `${currentUser.name} (${currentUser.role.toUpperCase()})`;
@@ -335,6 +350,7 @@
 
         function logout() {
             currentUser = null;
+            localStorage.removeItem('task_manager_user'); // Clear session
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('app-container').classList.add('hidden');
             document.getElementById('login-password').value = '';
